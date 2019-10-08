@@ -39,14 +39,14 @@
 #define MSG_SYS_S_SNAPSMALL 8
 #define MSG_SYS_S_AUTH_CHALLANGE 12
 #define MSG_SYS_S_AUTH_RESULT 13
-#define MSG_SYS_C_INFO 1 
+#define MSG_SYS_C_INFO 1
 #define MSG_SYS_C_READY 14
 #define MSG_SYS_C_ENTERGAME 15
 #define MSG_SYS_C_INPUT 16
 #define MSG_SYS_C_RCON_CMD 17
 #define MSG_SYS_C_RCON_AUTH 18
 #define MSG_SYS_C_REQUEST_MAP_DATA 19
-#define MSG_SYS_C_AUTH_START 20 
+#define MSG_SYS_C_AUTH_START 20
 #define MSG_SYS_C_AUTH_RESPONSE 21
 #define MSG_SYS_B_PING 22
 #define MSG_SYS_B_PING_REPLY 23
@@ -82,7 +82,7 @@
 #define D(F, A...) fprintf(stderr, "%d:%s(): " F "\n", __LINE__, __func__, ##A)
 #define PTAuint proto_tree_add_uint
 #define PTAitem proto_tree_add_item
-#define PTAtext proto_tree_add_text
+// #define PTAtext proto_tree_add_text // TODO: (chiller) uncomment this
 #define PIAstree proto_item_add_subtree
 
 
@@ -220,7 +220,7 @@ static const value_string hf_nc_msg_u_strings[] = {
 };
 
 /* top level dissector */
-static int ds_tw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree);
+static int ds_tw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_);
 
 /* packet type specific subdissectors */
 static int ds_pkg_cf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
@@ -245,16 +245,16 @@ void proto_reg_handoff_tw(void);
 /*============================================================================*/
 /* dissection (top level) */
 static int
-ds_tw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
+ds_tw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
 {
-	int hlen, len, off = 0;
+	int hlen/*, len*/, off = 0;
 	unsigned pkg_flg;
 	int pkg_ack, pkg_nch;
 	proto_tree *tw_tree = NULL;
 	proto_item *ti;
 	tvbuff_t *next_tvb;
 
-	len = tvb_captured_length(tvb);
+	// len = tvb_captured_length(tvb);
 	col_clear(pinfo->cinfo, COL_INFO);
 
 	hlen = extract_pkghead(tvb, &pkg_flg, &pkg_ack, &pkg_nch);
@@ -280,7 +280,7 @@ ds_tw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 			static guint8 uncompr[2500];//XXX
 			int res;
 			res = tw_hm_decompr(tvb_get_ptr(tvb, off, -1),
-			                         tvb_length_remaining(tvb, off),
+			                         tvb_captured_length_remaining(tvb, off),
 			                         uncompr, sizeof uncompr);
 
 			if (res < 0)
@@ -295,7 +295,7 @@ ds_tw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 			                                "Decompressed Payload");
 		}
 		else
-			next_tvb = tvb_new_subset(tvb, off, -1, -1);
+			next_tvb = tvb_new_subset_length_caplen(tvb, off, -1, -1); // TODO: (chiller) not sure about that one
 
 		off = 0;
 	}
@@ -328,8 +328,10 @@ static int
 ds_pkg_cf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int nch)
 {
 	proto_tree *nc_tree = NULL;
-	proto_tree *chpl_tree = NULL;
-	proto_item *ti;
+	// proto_tree *chpl_tree = NULL; // TODO: (chiller) uncomment this
+	// proto_item *ti; // TODO: (chiller) uncomment this
+	tree = NULL; // TODO: (chiller) remove this
+	printf("tree: %p", tree);
 	gchar colinfo[128];
 
 	int i;
@@ -344,8 +346,11 @@ ds_pkg_cf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int nch)
 		int hlen;
 		hlen = extract_nchead(tvb, off, &cflags, &clen, &cseq);
 
+		/*
+		TODO: (chiller) uncomment this
 		ti = PTAtext(tree, tvb, off, hlen + clen, "Chunk #%d", i + 1);
 		nc_tree = PIAstree(ti, ett_chunk);
+		*/
 		PTAuint(nc_tree, hf_nc_flg, tvb, off, 1, cflags);
 		PTAuint(nc_tree, hf_nc_len, tvb, off, 2, clen);
 		if (cflags&NC_FLG_VITAL)
@@ -377,11 +382,14 @@ ds_pkg_cf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int nch)
 
 		if (ds_msg[msys][mmsg&(MAX_MSGID-1)])
 		{
+			/*
+			TODO: (chiller) uncomment this
 			ti = PTAtext(nc_tree, tvb, off + hlen, clen - hlen,
 			             "Message payload (%d bytes)", clen - hlen);
 			chpl_tree = PIAstree(ti, ett_chunk_pl);
 			ds_msg[msys][mmsg&(MAX_MSGID-1)](tvb, off + hlen,
 			                         clen - hlen, pinfo, chpl_tree);
+			*/
 		}
 		else
 			ds_dummy(tvb, off, clen, pinfo, nc_tree);
@@ -418,8 +426,12 @@ static int ds_dummy(tvbuff_t *tvb, int off, int len,
 	msys = mmsg&1;
 	mmsg = ((unsigned)mmsg) >> 1;
 
+	printf("mysys: %d", msys); // TODO: (chiller) remove this
+	/*
+	TODO: (chiller) uncomment this
 	PTAtext(tree, tvb, off, len, "Payload (%d B) of unknown msg %d/%d",
 	                                                       len, msys, mmsg);
+	*/
 	(void)tvb; (void)off; (void)len; (void)pinfo; (void)tree;
 	return len + hlen;
 }
@@ -1463,6 +1475,6 @@ proto_reg_handoff_tw(void)
 {
 	dissector_handle_t tw_handle;
 
-	tw_handle = new_create_dissector_handle(ds_tw, proto_tw);
+	tw_handle = create_dissector_handle(ds_tw, proto_tw);
 	dissector_add_uint("udp.port", 8303, tw_handle);
 }

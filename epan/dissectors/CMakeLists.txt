@@ -1807,6 +1807,8 @@ set(DISSECTOR_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/packet-turnchannel.c
 	${CMAKE_CURRENT_SOURCE_DIR}/packet-tuxedo.c
 	${CMAKE_CURRENT_SOURCE_DIR}/packet-twamp.c
+	${CMAKE_CURRENT_SOURCE_DIR}/packet-tw.c
+	${CMAKE_CURRENT_SOURCE_DIR}/packet-tw_hm.c
 	${CMAKE_CURRENT_SOURCE_DIR}/packet-tzsp.c
 	${CMAKE_CURRENT_SOURCE_DIR}/packet-u3v.c
 	${CMAKE_CURRENT_SOURCE_DIR}/packet-ua.c
