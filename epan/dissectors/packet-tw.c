@@ -79,7 +79,7 @@
 
 
 /* reduce PITA while coding */
-#define D(F, A...) fprintf(stderr, "%d:%s(): " F "\n", __LINE__, __func__, ##A)
+#define D(F, ...) fprintf(stderr, "%d:%s(): " F "\n", __LINE__, __func__, ##__VA_ARGS__)
 #define PTAuint proto_tree_add_uint
 #define PTAitem proto_tree_add_item
 // #define PTAtext proto_tree_add_text // TODO: (chiller) uncomment this
@@ -365,8 +365,8 @@ ds_pkg_cf(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int nch)
 		/* make info a bit more precise 
 		 * XXX HACK: how properly access value strings for hfs? */
 		{
-		int len = strlen(colinfo);
-		int rem = (sizeof colinfo) - len - 1;
+		int len = (int)strlen(colinfo);
+		int rem = (int)((sizeof colinfo) - len - 1);
 		if (rem > 0)
 			g_snprintf(colinfo + len, rem, "%s%c/%s", i?", ":"",
 		                   msys ? 'S' : 'U', 
